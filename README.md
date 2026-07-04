@@ -1,4 +1,4 @@
-# Building_biocontrol_backwards
+# Building biocontrol backwards
 This repository contains scripts and supplementary data for the manuscript titled: Repository for manuscript 'Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms"
 
 ## Contents
