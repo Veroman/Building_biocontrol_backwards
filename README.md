@@ -4,7 +4,6 @@ This repository contains scripts and supplementary data for the manuscript title
 ## Contents
 
 - `data/` - Supplementary data
-- `scripts/` - Scripts and commands
 
 ## Overview
 
