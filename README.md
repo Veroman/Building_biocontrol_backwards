@@ -1,5 +1,5 @@
 # Building biocontrol backwards
-This repository contains scripts and supplementary data for the manuscript titled: Repository for manuscript 'Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms"
+This repository contains scripts and supplementary data for the manuscript titled:'Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms"
 
 ## Contents
 
@@ -7,7 +7,7 @@ This repository contains scripts and supplementary data for the manuscript title
 
 ## Overview
 
-This study employed a mechanism-first approach to biocontrol discovery, leveraging functional metagenomics to identify Actinobacterial stearoyl-CoA desaturase genes as ecological indicators of *Xylella fastidiosa* risk. The analysis involved two primary stages: (1) searching metagenomes for stearoyl-CoA desaturase genes, and (2) validating this association through qPCR on plant samples.
+This study used functional metagenomics to identify microbial genes associated with plant health, using *Xylella fastidiosa* as a case study. Specifically, we searched for stearoyl-CoA desaturase genes, which we hypothesized would negatively correlate with Xf abundance. Our analysis had two stages: (1) screening Xf-related metagenomes for stearoyl-CoA desaturase genes, and (2) validating the relationship between gene abundance and Xf presence using qPCR.
 
 ---
 
@@ -16,17 +16,19 @@ This study employed a mechanism-first approach to biocontrol discovery, leveragi
 The following bioinformatics tools and databases were used for this analysis:
 
 ### Taxonomic Classification
-- **Kraken2** (v2.1.2): Taxonomic classification of metagenomic reads  
+- **Kraken2:** Taxonomic classification of metagenomic reads  
   GitHub: https://github.com/DerrickWood/kraken2  
   Databases: https://benlangmead.github.io/aws-indexes/k2
 
 ### Functional Gene Search
-- **Kaiju**: Fast metagenomic classification for protein-coding genes  
+- **Kaiju:** Metagenomic classification for protein-coding genes  
   GitHub: https://github.com/bioinformatics-centre/kaiju
 
-### Reference Databases
-- **UniProt**: Protein sequence database  
+### Reference Databases and samples
+- **UniProt:** Protein sequence database  
   Website: https://www.uniprot.org/
+- **NCBI SRA Toolkit:** extract FASTQ-files from SRA-accessions  
+  GitHub: https://github.com/ncbi/sra-tools/wiki/01.-Downloading-SRA-Toolkit
 
 ---
 
@@ -35,7 +37,8 @@ The following bioinformatics tools and databases were used for this analysis:
 ### 1. Searching for Potential Quorum Signal Surrogates
 
 #### 1.1 Data Download
-SRA data were downloaded for all 59 samples listed in `data/MetagenomeList-Xf.csv`. Each sample entry contains plant host and NCBI SRA run accession (SRR).
+SRA data were downloaded, and the FASTQ files extracted using NCBI SRA Toolkit prefetch and fasterq-dump.
+All metagenomic samples (raw data) is listed in `data/MetagenomeList-Xf.csv`. Each sample entry contains the plant host and the NCBI SRA run accession (SRR).
 
 #### 1.2 Taxonomic Screening with Kraken2
 
@@ -44,7 +47,7 @@ To detect *Xylella fastidiosa* in metagenomic samples, we classified all reads u
 ```bash
 cd /kraken2/kraken2-2.1.2/
 
-for i in $(ls <input_dir>*fastq.gz | grep "_R1" | cut -f 1 -d "_"); do 
+for i in $(ls <input_dir>/*fastq.gz | grep "_R1" | cut -f 1 -d "_"); do 
     N=$(basename $i .fastq.gz)
     ./kraken2 --db PlusPF \
         --gzip-compressed \
@@ -56,7 +59,7 @@ done
 ```
 
 **Parameters:**
-- `--db PlusPF`: Kraken2 PlusPF database (bacteria, archaea, viruses, fungi, plant)
+- `--db PlusPF`: Kraken2 PlusPF database (bacteria, archaea, viruses, protozoa, and fungi)
 - `--paired`: Paired-end read mode
 - `--report`: Classification report with abundance estimates
 - `--output`: Detailed classification per read
@@ -73,11 +76,11 @@ cd kaiju/bin
 # Create index
 ./kaiju-mkbwt -n 5 \
     -a ACDEFGHIKLMNPQRSTVWY \
-    -o <output_dir> \
+    -o <output_dir>/proteins \
     <fasta_path>
 
 # Create FM-index for fast search
-./kaiju-mkfmi <output_dir>
+./kaiju-mkfmi <output_dir>/proteins
 ```
 
 **Functional Classification:**
@@ -85,7 +88,7 @@ cd kaiju/bin
 ```bash
 cd kaiju/bin
 
-for i in $(ls <raw_data_dir>*.fastq | grep "_R1" | cut -f 1 -d "_"); do
+for i in $(ls <raw_data_dir>/*.fastq | grep "_R1" | cut -f 1 -d "_"); do
     N=$(basename $i .fastq)
     ./kaiju \
         -t /path/to/nodes.dmp \
@@ -129,10 +132,13 @@ The following primers and probes were used for quantitative real-time PCR (qPCR)
 | Nuclease-free Water | - | 2.4 µL |
 
 **Cycling Conditions:**
-- Denaturation: 95°C, 30 s
-- Annealing/Extension: 60°C, 30 s
-- Plate read and melt curve
+- initial denaturation: 98°C, 3 min
+- Denaturation: 95°C, 15 s
+- Annealing/Extension: 60°C, 40 s
 - 40 cycles total
+- Melt curve:
+  -  65°C, 5 s
+  -  95°C, 0.5°C/cy
 
 **Technical Replicates:** Three per sample
 
@@ -144,67 +150,3 @@ Cq values and melt curve temperatures were extracted from qPCR runs. Absolute qu
 - Correlation analysis between *Xf* and Actinobacterial stearoyl-CoA desaturase abundance
 
 ---
-
-## File Structure
-
-```
-xf-microbiome-biocontrol/
-├── README.md                          # This file
-├── LICENSE                            # Repository license
-├── data/
-│   ├── MetagenomeList-Xf.xlsx        # Sample metadata (59 metagenomes)
-│   ├── srr_sample_mapping.csv        # SRA accession to sample mapping
-│   └── supplemental_samples.csv       # Additional qPCR samples
-├── scripts/
-│   ├── 01_kraken2_classification.sh   # Kraken2 taxonomic profiling
-│   ├── 02_kaiju_functional_search.sh  # Kaiju gene search
-│   └── 03_qpcr_analysis.R             # qPCR data analysis
-├── docs/
-│   ├── METHODS.md                     # Detailed methods
-│   ├── DATABASE_CONSTRUCTION.md       # Custom database creation
-│   └── PRIMER_DESIGN.md               # Primer development notes
-└── results/
-    ├── kraken2/                       # Kraken2 classification reports
-    ├── kaiju/                         # Kaiju functional annotations
-    └── qpcr/                          # qPCR quantification data
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-- Kraken2 v2.1.2 or later
-- Kaiju
-- R (v3.6+) with packages: ggplot2, tidyverse, Hmisc
-- SRA Toolkit for downloading fastq files from NCBI
-
-### Running the Analysis
-
-1. **Download metagenomes** from NCBI SRA using accessions in `data/MetagenomeList-Xf.xlsx`
-
-2. **Run taxonomic classification:**
-   ```bash
-   bash scripts/01_kraken2_classification.sh
-   ```
-
-3. **Search for stearoyl-CoA desaturase genes:**
-   ```bash
-   bash scripts/02_kaiju_functional_search.sh
-   ```
-
-4. **Analyze qPCR data:**
-   ```R
-   source("scripts/03_qpcr_analysis.R")
-   ```
-
----
-
-## Metadata
-
-### Sample Information
-- **Total metagenomes analyzed:** 59 (publicly available)
-- **Supplemental qPCR samples:** 61
-- **qPCR targets detected in both assays:** 37 samples
-- **Undetectable *Xf*:** 14 samples
-- **Undetectable stearoyl-CoA desaturase:** 16 samples
