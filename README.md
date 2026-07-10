@@ -1,5 +1,7 @@
 # Building biocontrol backwards
 This repository contains scripts and supplementary data for the manuscript titled:'Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms"
+Authors: Cindy E. Morris, Sara Campigli, Guido Marchi, and Veronica Roman-Reyna.
+
 
 ## Contents
 
