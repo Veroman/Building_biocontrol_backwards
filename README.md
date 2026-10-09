@@ -1,16 +1,20 @@
 # Building biocontrol backwards
-This repository contains scripts and supplementary data for the manuscript titled:'Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms"
-Authors: Cindy E. Morris, Sara Campigli, Guido Marchi, and Veronica Roman-Reyna.
 
+Scripts, processed data, and supplementary tables for the manuscript:
 
-## Contents
+> **Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms**
+> Cindy E. Morris, Sara Campigli, Guido Marchi, and Veronica Roman-Reyna.
 
-- `data/` - Supplementary data
+Archived release: scholarsphere
 
 ## Overview
 
-This study used functional metagenomics to identify microbial genes associated with plant health, using *Xylella fastidiosa* as a case study. Specifically, we searched for stearoyl-CoA desaturase genes, which we hypothesized would negatively correlate with Xf abundance. Our analysis had two stages: (1) screening Xf-related metagenomes for stearoyl-CoA desaturase genes, and (2) validating the relationship between gene abundance and Xf presence using qPCR.
+This study used functional metagenomics to identify microbial genes associated with plant health, using *Xylella fastidiosa* (Xf) as a case study. We searched olive metagenomes for stearoyl-CoA (Δ9) desaturase genes, which we hypothesised would be negatively associated with Xf. The analysis had two stages:
 
+1. screening Xf-related metagenomes for stearoyl-CoA desaturase genes, and
+2. validating the relationship between Actinomycetota Δ9-desaturase abundance and Xf using qPCR.
+
+## Repository contents
 ---
 
 ## Programs and Dependencies
