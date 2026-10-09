@@ -15,6 +15,29 @@ This study used functional metagenomics to identify microbial genes associated w
 2. validating the relationship between Actinomycetota Δ9-desaturase abundance and Xf using qPCR.
 
 ## Repository contents
+
+```
+config.sh                          paths, database locations and every analysis threshold
+environment.yml                    conda environment with pinned software versions
+scripts/
+  00_download.sh                   SRA download (prefetch + fasterq-dump)
+  01_qc_fastp.sh                   adapter / quality trimming
+  02_host_removal.sh               removal of olive reads (Bowtie2)
+  03_kraken2_xylella.sh            Kraken2 + Bracken; Xf read confirmation by alignment
+  04_build_desaturase_db.sh        custom UniProt desaturase database + Kaiju index
+  05_kaiju_desaturase.sh           Kaiju search of host-free reads; lineage of each hit
+  06_summarize.py                  builds every processed table in results/
+  07_figures.R                     reproduces the manuscript figures from results/   (to add)
+
+results/                           processed tables (also in the Zenodo archive)
+  sample_summary.tsv
+  desaturase_reads_by_taxon.tsv
+  presence_sensitivity.tsv
+  depth_check.tsv
+  kraken2_reports/                 *.kreport and *.breport per sample
+  desaturase_db/                   FASTA, accession table and UniProt release of the custom database
+```
+
 ---
 
 ## Programs and Dependencies
