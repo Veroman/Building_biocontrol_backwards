@@ -1,0 +1,22 @@
+# Conda environment pinning every tool version used in the analysis.
+# Create with:  conda env create -f environment.yml && conda activate biocontrol
+# IMPORTANT: change the versions below to the ones you actually ran
+# (check with: kraken2 --version, kaiju -h, fastp --version, bowtie2 --version ...).
+name: biocontrol
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - scipy=1.13
+  - sra-tools=3.1.1
+  - pigz=2.8
+  - fastp=0.23.4
+  - bowtie2=2.5.4
+  - samtools=1.20
+  - kraken2=2.1.2
+  - bracken=2.9
+  - krakentools=1.2
+  - kaiju=1.10.1
+  - curl
+  - wget
