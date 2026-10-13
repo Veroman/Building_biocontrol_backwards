@@ -19,11 +19,14 @@ This study used functional metagenomics to identify microbial genes associated w
 ```
 config.sh                          paths, database locations, and every analysis threshold
 environment.yml                    conda environment with pinned software versions
-delta9.faa                         File with Delta9 proteins for the database.
 
+data/
+  delta9.faa                       File with Delta9 proteins for the database.
+  srr_files.txt                    List of SRR accessions used for this study.
+  
 scripts/
   00_download.sh                   SRA download (prefetch + fasterq-dump)
-  01_qc_fastp.sh                   adapter / quality trimming
+  01_qc_fastp.sh                   adapter/quality trimming
   02_kraken2_xylella.sh            Kraken2
   03_build_desaturase_db.sh        custom UniProt desaturase database + Kaiju index
   04_kaiju_desaturase.sh           Kaiju search of host-free reads; lineage of each hit
@@ -60,15 +63,15 @@ Rscript scripts/07_figures.R
 
 ### 1. Data
 
-The 59 paired-end shotgun metagenomes listed in the repository were downloaded with `prefetch` and `fasterq-dump`. 
+We downloaded the 59 paired-end shotgun metagenomes listed in the repository using `prefetch` and `fasterq-dump`. 
 
 ### 2. Read quality control
 
-Reads were trimmed with fastp: automatic adapter detection for paired-end data, sliding-window trimming from the 3′ end (window 4, mean Q ≥ 20), removal of reads < 50 bp, with > 5 ambiguous bases, or of low complexity.
+Reads were trimmed with Trimmomatic.
 
 ### 3. Taxonomic classification and Xylella detection
 
-Reads were classified with Kraken2 against the PlusPF database (archaea, bacteria, viruses, plasmids, human, UniVec_Core, protozoa and fungi) with `--confidence 0.1`. Species abundances were re-estimated with Bracken (read length 150, species level, threshold 10 reads). Bacterial and fungal fractions were taken from the Kraken2 report as reads assigned to the domain Bacteria (taxid 2) and kingdom Fungi (taxid 4751).
+The reads were classified with Kraken2 against the PlusPF database (archaea, bacteria, viruses, plasmids, human, UniVec_Core, protozoa and fungi) downloaded in 2024. Bacterial and fungal fractions were taken from the Kraken2 report as reads assigned to the domain Bacteria (taxid 2) and kingdom Fungi (taxid 4751).
 
 ### 4. Custom stearoyl-CoA desaturase database
 
