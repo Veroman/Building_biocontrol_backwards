@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Step 1 - Taxonomic classification (Kraken2) and Xylella confirmation.
+#
+# 3a  Kraken2 on host-free reads with a confidence threshold (default 0 gives many false positives).
+# 3b  Reads Kraken2 assigned to X. fastidiosa (taxid 2371 and children) are extracted with
+#     KrakenTools and re-aligned to an Xf reference genome; only reads that align
+#     (Bowtie2, end-to-end) are counted as "confirmed Xf reads". This guards against
+#     misassignment from related Xanthomonadaceae.
+
+set -euo pipefail
+source "$(dirname "$0")/../config.sh"
+mkdir -p "$KRAKEN_DIR" "$LOG_DIR" "${WORK_DIR}/ref"
+
+kraken2 --version | head -1 > "${LOG_DIR}/versions_kraken2.txt"
+basename "$KRAKEN_DB" > "${LOG_DIR}/kraken2_database_build.txt"
+
+KRAKEN_DB= "/path/PlusPF"
+
+XF_INDEX="${WORK_DIR}/ref/xf_bt2"
+[ -s "${XF_INDEX}.1.bt2" ] || bowtie2-build --threads "$THREADS" "$XF_REF_FASTA" "$XF_INDEX"
+
+for R1 in "${HOSTFREE_DIR}"/*_1.fastq.gz; do
+    S=$(basename "$R1" _1.fastq.gz)
+    R2="${HOSTFREE_DIR}/${S}_2.fastq.gz"
+
+    # 3a Kraken2
+    kraken2 --db "$KRAKEN_DB" --threads "$THREADS" \
+        --paired --gzip-compressed \
+        --report "${KRAKEN_DIR}/${S}.kreport" \
+        --output "${KRAKEN_DIR}/${S}.kraken" \
+        "$R1" "$R2"
+
+    # 3c Extract putative Xf reads and confirm by alignment
+    extract_kraken_reads.py -k "${KRAKEN_DIR}/${S}.kraken" -r "${KRAKEN_DIR}/${S}.kreport" \
+        -s1 "$R1" -s2 "$R2" -t "$XF_TAXID" --include-children --fastq-output \
+        -o "${KRAKEN_DIR}/${S}.xf_1.fq" -o2 "${KRAKEN_DIR}/${S}.xf_2.fq"
+
+    if [ -s "${KRAKEN_DIR}/${S}.xf_1.fq" ]; then
+        bowtie2 -p "$THREADS" --end-to-end --no-unal \
+            -x "$XF_INDEX" -1 "${KRAKEN_DIR}/${S}.xf_1.fq" -2 "${KRAKEN_DIR}/${S}.xf_2.fq" \
+            2> "${KRAKEN_DIR}/${S}.xf_confirm.log" \
+        | samtools view -c -F 0x904 -q 10 - > "${KRAKEN_DIR}/${S}.xf_confirmed_reads.txt"
+    else
+        echo 0 > "${KRAKEN_DIR}/${S}.xf_confirmed_reads.txt"
+    fi
+done
