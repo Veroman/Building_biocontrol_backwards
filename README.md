@@ -87,33 +87,6 @@ Plant and animal sequences were excluded so that residual host reads cannot matc
 
 Host-free read pairs were searched against the database with Kaiju in greedy mode with: at most 3 mismatches (`-e 3`), minimum match score 75 (`-s 75`), minimum match length 20 aa (`-m 20`), maximum E-value 0.001 (`-E 0.001`), and SEG low-complexity filtering (default). Reads matching several database sequences equally well were assigned to the lowest common ancestor (LCA) of those sequences (Kaiju default). The superkingdom, phylum, class and genus of each hit were added with `kaiju-addTaxonNames`. A read was counted as an Actinomycetota Δ9-desaturase read when its LCA was within the phylum Actinomycetota (taxid 201174); reads assigned above phylum level were counted in the total but not attributed to a phylum.
 
-
-
-
-#### 1.2 Taxonomic Screening with Kraken2
-
-To detect *Xylella fastidiosa* in metagenomic samples, we classified all reads using Kraken2 with the PlusPF database:
-
-```bash
-cd /kraken2/kraken2-2.1.2/
-
-for i in $(ls <input_dir>/*fastq.gz | grep "_R1" | cut -f 1 -d "_"); do 
-    N=$(basename $i .fastq.gz)
-    ./kraken2 --db PlusPF \
-        --gzip-compressed \
-        --paired \
-        --report <output_dir>/$N.kreport \
-        --output <output_dir>/$N.kraken \
-        ${i}_R1.fastq.gz ${i}_R2.fastq.gz
-done
-```
-
-**Parameters:**
-- `--db PlusPF`: Kraken2 PlusPF database (bacteria, archaea, viruses, protozoa, and fungi)
-- `--paired`: Paired-end read mode
-- `--report`: Classification report with abundance estimates
-- `--output`: Detailed classification per read
-
 #### 1.3 Functional Gene Search with Kaiju
 
 To identify stearoyl-CoA desaturase genes from bacteria and fungi, we created a custom Kaiju database from UniProt sequences (22,000 sequences matching query: "stearoyl-CoA desaturase").
@@ -162,41 +135,3 @@ done
 - `-s`: Sensitivity (60 = high sensitivity)
 - `-e`: Maximum number of E-values to report
 - `-m`: Minimum match length (amino acids)
-
----
-
-### 2. Validating Actinobacteria Stearoyl-CoA Desaturase as an Xf Risk Indicator
-
-#### 2.1 qPCR Assay Design and Validation
-
-The following primers and probes were used for quantitative real-time PCR (qPCR): `data/qPCR_primers.csv`
-
-**Final reaction volume:** 10 µL
-
-| Component | Concentration | Volume |
-|-----------|---------------|--------|
-| SsoAdvanced Universal SYBR Green Supermix | 5 µL | 5.0 µL |
-| Forward Primer | 300 nM | variable |
-| Reverse Primer | 300 nM | variable |
-| Template DNA | 0.04 ng | 2.0 µL |
-| Nuclease-free Water | - | 2.4 µL |
-
-**Cycling Conditions:**
-- initial denaturation: 98°C, 3 min
-- Denaturation: 95°C, 15 s
-- Annealing/Extension: 60°C, 40 s
-- 40 cycles total
-- Melt curve:
-  -  65°C, 5 s
-  -  95°C, 0.5°C/cy
-
-**Technical Replicates:** Three per sample
-
-#### 2.3 Data Analysis
-
-Cq values and melt curve temperatures were extracted from qPCR runs. Absolute quantification was performed using:
-- Standard curves generated from serial dilutions
-- Conversion to log₁₀ absolute copy number
-- Correlation analysis between *Xf* and Actinobacterial stearoyl-CoA desaturase abundance
-
----
