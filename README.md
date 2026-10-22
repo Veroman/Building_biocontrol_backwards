@@ -5,65 +5,67 @@ Scripts, processed data, and supplementary tables for the manuscript:
 > **Building biocontrol backwards for forward-thinking plant health management based on efficient mechanisms**
 > Cindy E. Morris, Sara Campigli, Guido Marchi, and Veronica Roman-Reyna.
 
-Archived release: scholarsphere
+Archived release: <scholarsphere>
 
 ## Overview
 
-This study used functional metagenomics to identify microbial genes associated with plant health, using *Xylella fastidiosa* (Xf) as a case study. We searched olive metagenomes for stearoyl-CoA (Δ9) desaturase genes, which we hypothesised would be negatively associated with Xf. The analysis had two stages:
+This study used functional metagenomics to identify microbial genes associated with plant health, using *Xylella fastidiosa* (Xf) as a case study. We searched olive metagenomes for stearoyl-CoA (Δ9) desaturase genes, which we hypothesised would be negatively associated with Xf. 
 
-1. screening Xf-related metagenomes for stearoyl-CoA desaturase genes, and
-2. validating the relationship between Actinomycetota Δ9-desaturase abundance and Xf using qPCR.
-
-## Repository contents
-
-```
-config.sh                          paths, database locations, and every analysis threshold
-environment.yml                    conda environment with pinned software versions
-
-data/
-  delta9.faa                       File with Delta9 proteins for the database.
-  srr_files.txt                    List of SRR accessions used for this study.
-  
-scripts/
-  00_download.sh                   SRA download (prefetch + fasterq-dump)
-  01_qc_fastp.sh                   adapter/quality trimming
-  02_kraken2_xylella.sh            Kraken2
-  03_build_desaturase_db.sh        custom UniProt desaturase database + Kaiju index
-  04_kaiju_desaturase.sh           Kaiju search of host-free reads; lineage of each hit
-  05_summarize.py                  builds every processed table in results/
-```
 ## Software and databases
 
-| Step | Software (version) | Database (version / date) |
-|---|---|---|
-| Download | SRA Toolkit (3.1.1) | NCBI SRA |
-| Read QC | fastp (0.23.4) | – |
-| Taxonomic classification | Kraken2 (2.1.2), Bracken (2.9), KrakenTools (1.2) | Kraken2 PlusPF, build `k2_pluspf_2022` |
-| Delta9 search | Kaiju (1.10.1) | Custom UniProtKB database, release `20XX_XX` (downloaded YYYY-MM-DD); NCBI taxonomy downloaded YYYY-MM-DD |
-| Statistics | Python 3.11, SciPy (1.13); R (4.x) | – |
-
-*Versions above are placeholders taken from `environment.yml`; replace them with the versions in `work/logs/versions_*.txt`.*
+| Step | Software (version) | Database (version / date) | Link
+|---|---|---|---|
+| Download | SRA Toolkit (3.1.1) | NCBI SRA |https://github.com/ncbi/sra-tools/wiki/08.-prefetch-and-fasterq-dump
+| Read QC | Trimmomatic (0.41) | – |https://github.com/usadellab/trimmomatic
+| Taxonomic classification | Kraken2 (2.1.2) | Kraken2 PlusPF, build `k2_pluspf_2022` | https://github.com/DerrickWood/kraken2/wiki
+| Delta9 search | Kaiju (1.10.1) | Custom UniProtKB database, (accessed 2022) |https://github.com/bioinformatics-centre/kaiju
 
 ## Running the pipeline
 
+# Step 1 - Download raw reads from NCBI SRA
+
 ```bash
-conda env create -f environment.yml
-conda activate biocontrol
-# edit paths in config.sh, then:
-source config.sh
-bash scripts/00_download.sh
-bash scripts/01_qc_fastp.sh
-bash scripts/03_kraken2_xylella.sh
-bash scripts/04_build_desaturase_db.sh
-bash scripts/05_kaiju_desaturase.sh
-python3 scripts/06_summarize.py
-Rscript scripts/07_figures.R
-`
-## Analysis workflow
+#!/usr/bin/env bash
+# 1.1) prefetch  1.2) fasterq-dump
 
-### 1. Data
+SRATOOLKIT=/PROGRAMS/sratoolkit.3.1.1-ubuntu64/bin
+OUT=/path/to/raw_data      # change to your output folder
+LIST=path/to/accessions.txt
+mkdir -p ${OUT}
 
-We downloaded the 59 paired-end shotgun metagenomes listed in the repository using `prefetch` and `fasterq-dump`. 
+cd ${SRATOOLKIT}
+
+# 1.1 Download .sra files
+./prefetch --option-file ${LIST} --output-directory ${OUT} --max-size u
+
+# 1.2 Convert to paired FASTQ and compress
+for i in $(cat ${LIST}); do
+    ./fasterq-dump ${OUT}/${i} --split-files --threads 8 --outdir ${OUT}
+    gzip ${OUT}/${i}_1.fastq ${OUT}/${i}_2.fastq
+done
+```
+
+# Step 2 - Kraken2 
+
+```bash
+#!/usr/bin/env bash
+
+KRAKEN2=/path/to/kraken2/
+KRAKEN_DB= /path/PlusPF
+
+for R1 in "${HOSTFREE_DIR}"/*_1.fastq.gz; do
+    S=$(basename "$R1" _1.fastq.gz)
+    R2="${HOSTFREE_DIR}/${S}_2.fastq.gz"
+
+    # 3a Kraken2
+    kraken2 --db "$KRAKEN_DB" --threads "$THREADS" \
+        --paired --gzip-compressed \
+        --report "${KRAKEN_DIR}/${S}.kreport" \
+        --output "${KRAKEN_DIR}/${S}.kraken" \
+        "$R1" "$R2"
+```
+# Step 3 - Kraken2 
+
 
 ### 2. Read quality control
 
